@@ -11,10 +11,11 @@ body {
 }
 
 body {
-  background: #efe7d6;
-  color: #161412;
-  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
-  -webkit-font-smoothing: antialiased;
+  background: #f4f2ec;
+  color: #111111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  font-weight: 400;
 }
 
 button,
@@ -36,8 +37,8 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 3px solid #161412;
-  outline-offset: 4px;
+  outline: 2px solid #111111;
+  outline-offset: 3px;
 }
 
 .wrap {
@@ -59,18 +60,19 @@ input:focus-visible {
 .blast {
   width: 100%;
   text-align: left;
-  font-size: clamp(3.4rem, 16vw, 5.2rem);
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  font-weight: 400;
+  font-size: clamp(2.8rem, 13vw, 4.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  text-transform: none;
 }
 
 .blast:active {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .hang {
-  padding-top: 0.4rem;
+  padding-top: 0.25rem;
 }
 
 .name,
@@ -79,31 +81,31 @@ input:focus-visible {
   width: 100%;
   background: transparent;
   border: 0;
-  border-bottom: 2px solid #161412;
+  border-bottom: 1px solid #111111;
   border-radius: 0;
   margin: 0;
-  padding: 0.35rem 0 0.5rem;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  padding: 0.4rem 0 0.45rem;
+  line-height: 1.2;
   font-weight: 400;
 }
 
 .name {
-  font-size: clamp(2.15rem, 9vw, 2.9rem);
+  font-size: clamp(1.85rem, 7.5vw, 2.45rem);
 }
 
 .hangline {
-  margin-top: 0.55rem;
-  font-size: clamp(1.55rem, 6.2vw, 2rem);
+  margin-top: 0.35rem;
+  font-size: clamp(1.15rem, 4.6vw, 1.45rem);
+  font-weight: 400;
 }
 
 .name::placeholder {
-  color: #161412;
-  opacity: 0.55;
+  color: #111111;
+  opacity: 0.45;
 }
 
 .hangline::placeholder {
-  color: #161412;
+  color: #111111;
   opacity: 0.35;
 }
 
@@ -131,28 +133,31 @@ input:focus-visible {
 }
 
 .lanes {
-  margin-top: 1.45rem;
+  margin-top: 1.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
 }
 
 .row {
   display: block;
   width: 100%;
   text-align: left;
-  border: 2px solid #161412;
-  padding: 0.42em 0.4em 0.38em;
-  font-size: clamp(2.35rem, 10.5vw, 3.35rem);
-  line-height: 0.95;
-  letter-spacing: -0.045em;
-  font-weight: 400;
+  padding: 0.85rem 0;
+  font-size: clamp(2.05rem, 9vw, 2.85rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  border-radius: 0;
+}
+
+.row + .row {
+  border-top: 1px solid #111111;
 }
 
 .row:active,
 .row.mine {
-  background: #161412;
-  color: #efe7d6;
+  background: #111111;
+  color: #f4f2ec;
 }
 
 .head {
@@ -174,13 +179,12 @@ input:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.12em;
-  margin-top: 0.42em;
-  font-size: clamp(1.05rem, 4.2vw, 1.28rem);
-  line-height: 1.25;
-  letter-spacing: -0.02em;
-  font-weight: 400;
-  opacity: 0.48;
+  gap: 0.08em;
+  margin-top: 0.35em;
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  line-height: 1.3;
+  font-weight: 300;
+  opacity: 0.7;
 }
 
 .names:empty {
@@ -189,44 +193,44 @@ input:focus-visible {
 
 .row.mine .names,
 .row:active .names {
-  opacity: 0.72;
+  opacity: 0.8;
 }
 
 .who {
   display: block;
   overflow-wrap: anywhere;
+  font-weight: 300;
 }
 
 .after {
-  margin-top: 2.2rem;
+  margin-top: 1.8rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.55rem;
+  gap: 0.45rem;
 }
 
 .copy,
 .yours {
-  font-size: 1.35rem;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: 1.15rem;
+  line-height: 1.3;
   text-align: left;
   font-weight: 400;
 }
 
 .copy {
   text-decoration: underline;
-  text-underline-offset: 0.18em;
+  text-underline-offset: 0.15em;
 }
 
 .yours {
   text-decoration: none;
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .yours:active,
 .copy:active {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 .err {

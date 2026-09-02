@@ -18,7 +18,7 @@ Then open [http://127.0.0.1:47261](http://127.0.0.1:47261) on your phone or lapt
 
 ## How a hang works
 
-1. First visit is almost blank. Tap **we still on**. That mints a new hang URL (`/h/……`) and puts you on it.
+1. First visit is almost blank. Tap **we still on?** That mints a new hang URL (`/h/……`) and puts you on it.
 2. The hang page is: **your name**, one optional line (**what's the hang** — e.g. Luigi's, Friday dinner), then three fat rows: **Yes**, **Late**, **Out**. Each row is the word, a count, and names quiet underneath.
 3. The hang line is where and what, together. It is optional. The first tap on this hang sets it, then it freezes. Nobody can edit it after that — not even the starter. There is no separate where field and no separate what field.
 4. After this device has tapped, **Copy link** appears. That copies *this* hang’s URL — the thing you paste into the group chat. Under it, **Start yours** mints a brand-new hang. It never copies this one.
