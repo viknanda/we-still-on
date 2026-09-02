@@ -1,6 +1,7 @@
 const STATUSES = new Set(["yes", "late", "out"]);
 const ID_BYTES = 6;
 const NAME_MAX = 48;
+const LINE_MAX = 64;
 
 export function newHangId() {
   return Buffer.from(crypto.getRandomValues(new Uint8Array(ID_BYTES))).toString(
@@ -19,6 +20,11 @@ export function cleanName(raw) {
   return name.slice(0, NAME_MAX);
 }
 
+export function cleanLine(raw) {
+  if (typeof raw !== "string") return "";
+  return raw.trim().slice(0, LINE_MAX);
+}
+
 export function createStore() {
   const hangs = new Map();
 
@@ -26,7 +32,7 @@ export function createStore() {
     create() {
       let id = newHangId();
       while (hangs.has(id)) id = newHangId();
-      hangs.set(id, { id, people: [] });
+      hangs.set(id, { id, people: [], line: "", frozen: false });
       return hangs.get(id);
     },
 
@@ -34,7 +40,7 @@ export function createStore() {
       return hangs.get(id) ?? null;
     },
 
-    tap(id, deviceId, rawName, rawStatus) {
+    tap(id, deviceId, rawName, rawStatus, rawLine) {
       const hang = hangs.get(id);
       if (!hang) return { error: "gone" };
       if (typeof deviceId !== "string" || !deviceId) {
@@ -44,6 +50,11 @@ export function createStore() {
       if (!name) return { error: "name" };
       const status = typeof rawStatus === "string" ? rawStatus.toLowerCase() : "";
       if (!STATUSES.has(status)) return { error: "status" };
+
+      if (!hang.frozen) {
+        hang.line = cleanLine(rawLine);
+        hang.frozen = true;
+      }
 
       const existing = hang.people.find((p) => p.deviceId === deviceId);
       if (existing) {
@@ -61,6 +72,8 @@ export function createStore() {
       const you = hang.people.find((p) => p.deviceId === deviceId) ?? null;
       return {
         id: hang.id,
+        line: hang.line,
+        frozen: hang.frozen,
         people: hang.people.map(({ name, status }) => ({ name, status })),
         you: you ? { name: you.name, status: you.status } : null,
       };

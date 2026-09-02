@@ -1,6 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { cleanName, createStore, isHangId, newHangId } from "./hang-store.js";
+import {
+  cleanLine,
+  cleanName,
+  createStore,
+  isHangId,
+  newHangId,
+} from "./hang-store.js";
 
 describe("ids", () => {
   it("mints short unguessable ids", () => {
@@ -73,5 +79,50 @@ describe("store", () => {
     store.tap(hang.id, "secret-device", "Kim", "yes");
     const json = JSON.stringify(store.view(hang.id, "secret-device"));
     assert.equal(json.includes("secret-device"), false);
+  });
+
+  it("first tap freezes the hang line, later taps cannot change it", () => {
+    const store = createStore();
+    const hang = store.create();
+    const before = store.view(hang.id, "d1");
+    assert.equal(before.frozen, false);
+    assert.equal(before.line, "");
+
+    store.tap(hang.id, "d1", "Alex", "yes", "Luigi's");
+    assert.equal(store.view(hang.id, "d1").line, "Luigi's");
+    assert.equal(store.view(hang.id, "d1").frozen, true);
+
+    store.tap(hang.id, "d1", "Alex", "late", "Friday dinner");
+    store.tap(hang.id, "d2", "Sam", "out", "somewhere else");
+    const view = store.view(hang.id, "d2");
+    assert.equal(view.line, "Luigi's");
+    assert.equal(view.frozen, true);
+  });
+
+  it("empty hang line still freezes on first tap", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Alex", "yes", "  ");
+    store.tap(hang.id, "d2", "Sam", "late", "Friday dinner");
+    const view = store.view(hang.id, "d1");
+    assert.equal(view.line, "");
+    assert.equal(view.frozen, true);
+  });
+
+  it("start yours does not copy the hang line", () => {
+    const store = createStore();
+    const a = store.create();
+    store.tap(a.id, "d1", "Sam", "yes", "Luigi's");
+    const b = store.create();
+    const view = store.view(b.id, "d1");
+    assert.equal(view.frozen, false);
+    assert.equal(view.line, "");
+  });
+});
+
+describe("hang line", () => {
+  it("trims and keeps what was typed", () => {
+    assert.equal(cleanLine("  Friday dinner  "), "Friday dinner");
+    assert.equal(cleanLine(""), "");
   });
 });

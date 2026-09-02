@@ -23,24 +23,45 @@
           type="text"
           maxlength="48"
           autocomplete="nickname"
-          enterkeyhint="done"
+          enterkeyhint="next"
           autocapitalize="words"
           spellcheck="false"
           placeholder="your name"
         />
+        <input
+          id="line"
+          class="hangline"
+          type="text"
+          maxlength="64"
+          autocomplete="off"
+          enterkeyhint="done"
+          autocapitalize="sentences"
+          spellcheck="false"
+          placeholder="what's the hang"
+        />
+        <p id="frozen" class="hangline frozen" hidden></p>
         <div class="lanes">
-          <section class="lane">
-            <button type="button" class="choice" data-status="yes">Yes</button>
-            <ul class="names" data-status="yes" hidden></ul>
-          </section>
-          <section class="lane">
-            <button type="button" class="choice" data-status="late">Late</button>
-            <ul class="names" data-status="late" hidden></ul>
-          </section>
-          <section class="lane">
-            <button type="button" class="choice" data-status="out">Out</button>
-            <ul class="names" data-status="out" hidden></ul>
-          </section>
+          <button type="button" class="row" data-status="yes">
+            <span class="head">
+              <span class="word">Yes</span>
+              <span class="count" data-count="yes">0</span>
+            </span>
+            <span class="names" data-status="yes"></span>
+          </button>
+          <button type="button" class="row" data-status="late">
+            <span class="head">
+              <span class="word">Late</span>
+              <span class="count" data-count="late">0</span>
+            </span>
+            <span class="names" data-status="late"></span>
+          </button>
+          <button type="button" class="row" data-status="out">
+            <span class="head">
+              <span class="word">Out</span>
+              <span class="count" data-count="out">0</span>
+            </span>
+            <span class="names" data-status="out"></span>
+          </button>
         </div>
         <div id="after" class="after" hidden>
           <button type="button" class="copy" id="copy">Copy link</button>

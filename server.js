@@ -139,7 +139,13 @@ async function handleApi(req, res, url) {
       send(res, 400, { error: "bad" });
       return;
     }
-    const result = store.tap(tap[1], did, payload.name, payload.status);
+    const result = store.tap(
+      tap[1],
+      did,
+      payload.name,
+      payload.status,
+      payload.line,
+    );
     if (result.error === "gone") {
       send(res, 404, { error: "gone" });
       return;

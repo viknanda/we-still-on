@@ -2,6 +2,8 @@ const land = document.getElementById("land");
 const hangEl = document.getElementById("hang");
 const goneEl = document.getElementById("gone");
 const nameEl = document.getElementById("name");
+const lineEl = document.getElementById("line");
+const frozenEl = document.getElementById("frozen");
 const after = document.getElementById("after");
 const err = document.getElementById("err");
 const copyBtn = document.getElementById("copy");
@@ -25,9 +27,11 @@ function show(el) {
 function flash(msg) {
   err.textContent = msg;
   err.hidden = !msg;
-  if (msg) setTimeout(() => {
-    if (err.textContent === msg) err.hidden = true;
-  }, 2200);
+  if (msg) {
+    setTimeout(() => {
+      if (err.textContent === msg) err.hidden = true;
+    }, 2200);
+  }
 }
 
 async function createHang() {
@@ -65,30 +69,39 @@ async function copyLink() {
   }, 1400);
 }
 
+function paintLine(view) {
+  if (view.frozen) {
+    lineEl.hidden = true;
+    frozenEl.hidden = false;
+    frozenEl.textContent = view.line;
+  } else {
+    frozenEl.hidden = true;
+    lineEl.hidden = false;
+  }
+}
+
 function paint(view) {
   const signed = Boolean(view.you);
   after.hidden = !signed;
   if (view.you?.name && nameEl.value === "") {
     nameEl.value = view.you.name;
   }
+  paintLine(view);
 
-  const hasAnyone = view.people.length > 0;
   for (const status of ["yes", "late", "out"]) {
-    const btn = document.querySelector(`.choice[data-status="${status}"]`);
+    const row = document.querySelector(`.row[data-status="${status}"]`);
+    const countEl = document.querySelector(`[data-count="${status}"]`);
     const list = document.querySelector(`.names[data-status="${status}"]`);
-    btn.classList.toggle("mine", view.you?.status === status);
-    list.replaceChildren();
     const names = view.people.filter((p) => p.status === status);
-    if (!hasAnyone || names.length === 0) {
-      list.hidden = true;
-      continue;
-    }
+    row.classList.toggle("mine", view.you?.status === status);
+    countEl.textContent = String(names.length);
+    list.replaceChildren();
     for (const person of names) {
-      const li = document.createElement("li");
-      li.textContent = person.name;
-      list.appendChild(li);
+      const who = document.createElement("span");
+      who.className = "who";
+      who.textContent = person.name;
+      list.appendChild(who);
     }
-    list.hidden = false;
   }
 }
 
@@ -124,7 +137,7 @@ async function tap(status) {
     const res = await fetch(`/api/hangs/${hangId}/tap`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, status }),
+      body: JSON.stringify({ name, status, line: lineEl.value }),
     });
     if (res.status === 404) {
       show(goneEl);
@@ -153,16 +166,21 @@ againBtn.addEventListener("click", createHang);
 yoursBtn.addEventListener("click", createHang);
 copyBtn.addEventListener("click", copyLink);
 
-for (const btn of document.querySelectorAll(".choice")) {
-  btn.addEventListener("click", () => tap(btn.dataset.status));
+for (const row of document.querySelectorAll(".row")) {
+  row.addEventListener("click", () => tap(row.dataset.status));
 }
 
-nameEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    nameEl.blur();
-  }
-});
+function blurOnEnter(el) {
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      el.blur();
+    }
+  });
+}
+
+blurOnEnter(nameEl);
+blurOnEnter(lineEl);
 
 if (!hangId) {
   show(land);
