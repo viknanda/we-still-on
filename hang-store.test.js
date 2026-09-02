@@ -137,3 +137,41 @@ describe("hang line", () => {
     assert.equal(cleanLine(""), "");
   });
 });
+
+describe("mints and ttl", () => {
+  it("increments mints on each create, not on tap", () => {
+    const store = createStore();
+    assert.equal(store.mints(), 0);
+    store.create();
+    store.create();
+    assert.equal(store.mints(), 2);
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Sam", "yes");
+    assert.equal(store.mints(), 3);
+  });
+
+  it("a hang is gone 48 hours after last tap", () => {
+    let t = 1_000;
+    const store = createStore({
+      ttlMs: 48 * 60 * 60 * 1000,
+      now: () => t,
+    });
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Sam", "yes", "Luigi's");
+    t += 48 * 60 * 60 * 1000 + 1;
+    assert.equal(store.view(hang.id, "d1"), null);
+    assert.equal(store.tap(hang.id, "d1", "Sam", "late").error, "gone");
+  });
+
+  it("a tap refreshes the 48 hour window", () => {
+    let t = 1_000;
+    const hour = 60 * 60 * 1000;
+    const store = createStore({ ttlMs: 48 * hour, now: () => t });
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Sam", "yes");
+    t += 47 * hour;
+    store.tap(hang.id, "d1", "Sam", "late");
+    t += 47 * hour;
+    assert.equal(store.view(hang.id, "d1").you.status, "late");
+  });
+});

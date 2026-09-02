@@ -2,6 +2,7 @@ const STATUSES = new Set(["yes", "late", "out"]);
 const ID_BYTES = 6;
 const NAME_MAX = 48;
 const LINE_MAX = 64;
+export const TTL_MS = 48 * 60 * 60 * 1000;
 
 export function newHangId() {
   return Buffer.from(crypto.getRandomValues(new Uint8Array(ID_BYTES))).toString(
@@ -25,23 +26,54 @@ export function cleanLine(raw) {
   return raw.trim().slice(0, LINE_MAX);
 }
 
-export function createStore() {
+export function createStore({ ttlMs = TTL_MS, now = () => Date.now() } = {}) {
   const hangs = new Map();
+  let mints = 0;
+
+  function sweep() {
+    const t = now();
+    for (const [id, hang] of hangs) {
+      if (t - hang.touched > ttlMs) hangs.delete(id);
+    }
+  }
+
+  function live(id) {
+    sweep();
+    const hang = hangs.get(id);
+    if (!hang) return null;
+    if (now() - hang.touched > ttlMs) {
+      hangs.delete(id);
+      return null;
+    }
+    return hang;
+  }
 
   return {
     create() {
+      sweep();
+      mints += 1;
       let id = newHangId();
       while (hangs.has(id)) id = newHangId();
-      hangs.set(id, { id, people: [], line: "", frozen: false });
+      hangs.set(id, {
+        id,
+        people: [],
+        line: "",
+        frozen: false,
+        touched: now(),
+      });
       return hangs.get(id);
     },
 
     get(id) {
-      return hangs.get(id) ?? null;
+      return live(id);
+    },
+
+    mints() {
+      return mints;
     },
 
     tap(id, deviceId, rawName, rawStatus, rawLine) {
-      const hang = hangs.get(id);
+      const hang = live(id);
       if (!hang) return { error: "gone" };
       if (typeof deviceId !== "string" || !deviceId) {
         return { error: "who" };
@@ -63,11 +95,12 @@ export function createStore() {
       } else {
         hang.people.push({ deviceId, name, status });
       }
+      hang.touched = now();
       return { hang };
     },
 
     view(id, deviceId) {
-      const hang = hangs.get(id);
+      const hang = live(id);
       if (!hang) return null;
       const you = hang.people.find((p) => p.deviceId === deviceId) ?? null;
       return {
