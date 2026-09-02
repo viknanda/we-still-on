@@ -49,6 +49,17 @@ describe("store", () => {
     assert.equal(view.you.status, "yes");
   });
 
+  it("a new device sees the hang line but is not you until they tap", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "starter", "Alex", "yes", "Luigi's");
+    const joiner = store.view(hang.id, "incognito");
+    assert.equal(joiner.you, null);
+    assert.equal(joiner.line, "Luigi's");
+    assert.equal(joiner.frozen, true);
+    assert.equal(store.view(hang.id, "starter").you.name, "Alex");
+  });
+
   it("same device retap moves that person, not a new row", () => {
     const store = createStore();
     const hang = store.create();

@@ -1,7 +1,7 @@
 const land = document.getElementById("land");
 const hangEl = document.getElementById("hang");
 const goneEl = document.getElementById("gone");
-const nameEl = document.getElementById("name");
+const nameEl = document.getElementById("who");
 const lineEl = document.getElementById("line");
 const frozenEl = document.getElementById("frozen");
 const after = document.getElementById("after");
@@ -17,6 +17,8 @@ const hangId = match ? match[1] : null;
 let pollTimer = 0;
 let lastJson = "";
 let busy = false;
+let typedName = false;
+let focusedName = false;
 
 function show(el) {
   land.hidden = el !== land;
@@ -83,8 +85,16 @@ function paintLine(view) {
 function paint(view) {
   const signed = Boolean(view.you);
   after.hidden = !signed;
-  if (view.you?.name && nameEl.value === "") {
-    nameEl.value = view.you.name;
+  if (signed) {
+    if (view.you.name && !typedName && nameEl.value === "") {
+      nameEl.value = view.you.name;
+    }
+  } else if (!typedName) {
+    nameEl.value = "";
+    if (!focusedName) {
+      focusedName = true;
+      queueMicrotask(() => nameEl.focus());
+    }
   }
   paintLine(view);
 
@@ -118,6 +128,8 @@ async function pull() {
   if (snap !== lastJson) {
     lastJson = snap;
     paint(view);
+  } else if (!view.you && !typedName && nameEl.value) {
+    nameEl.value = "";
   }
   return view;
 }
@@ -178,6 +190,14 @@ function blurOnEnter(el) {
     }
   });
 }
+
+nameEl.addEventListener("input", () => {
+  typedName = nameEl.value.length > 0;
+});
+
+nameEl.addEventListener("focus", () => {
+  if (!typedName && after.hidden) nameEl.value = "";
+});
 
 blurOnEnter(nameEl);
 blurOnEnter(lineEl);

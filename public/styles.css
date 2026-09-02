@@ -83,17 +83,25 @@ input:focus-visible {
   border-radius: 0;
   margin: 0;
   padding: 0.35rem 0 0.5rem;
-  font-size: clamp(1.85rem, 7.6vw, 2.45rem);
   line-height: 1.15;
   letter-spacing: -0.03em;
   font-weight: 400;
 }
 
-.hangline {
-  margin-top: 0.55rem;
+.name {
+  font-size: clamp(2.15rem, 9vw, 2.9rem);
 }
 
-.name::placeholder,
+.hangline {
+  margin-top: 0.55rem;
+  font-size: clamp(1.55rem, 6.2vw, 2rem);
+}
+
+.name::placeholder {
+  color: #161412;
+  opacity: 0.55;
+}
+
 .hangline::placeholder {
   color: #161412;
   opacity: 0.35;
