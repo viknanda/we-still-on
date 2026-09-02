@@ -2,27 +2,23 @@
 
 A hang is a live score: names under Yes / Late / Out, plus one optional hang line.
 
-## Front door (give this to Joey)
+There is **no public front door yet**. Vercel serverless was tried and **failed**: a second phone hitting `/h/…` got "gone" because each request can be a new isolate and the in-memory map dies. Do not use that Vercel URL.
 
-**https://temporary-rapid-spruce-8a01c5z.vercel.app**
+A hang must live in **one always-on Node process** (Fly.io one machine). Deploy needs a Fly token this agent does not have. Add `FLY_API_TOKEN` (from `fly tokens create` or the Fly dashboard) and ask again — then we ship `https://we-still-on.fly.dev` (or the name Fly assigns) and prove two cookies share one hang.
 
-Two phones open that URL. The first tap on a hang freezes the hang line; Copy link pastes that hang into the group chat.
+```bash
+fly deploy --ha=false
+```
 
-This deploy is a Vercel anonymous/claimable production URL. **It expires about 60 minutes after deploy unless the owner claims it.** Claim it (keeps the project on your Vercel account, no GitHub):
-
-**https://vercel.com/claim-deployment?code=27c27530-851a-49cd-97bf-55289ba1787f**
-
-After you claim it, the same `*.vercel.app` host should stay up. Origin+Vercel git (repo Apps tab) is not connected from this agent — this was a direct Vercel deploy, not a GitHub mirror.
+`fly.toml` pins one machine, no autostop. `Dockerfile` runs `node server.js` on port 8080.
 
 ## Privacy
 
 - No accounts. No ads. No analytics pixels. Names are not sent to third-party APIs by this app.
 - The process does not log names, hang lines, device ids, or request bodies.
 - A hang is only in memory: names, status, hang line, random device cookie. **48 hours after the last tap, that hang is gone.**
-- The device cookie is a random id so a retap moves you. Not a user record. Max-Age matches the hang TTL (48 hours, refreshed while you use the site).
-- Mint counter: one integer, incremented when someone hits **we still on?** or **Start yours** (`POST /api/hangs`). Not shown on the hang. `GET /internal/mints` returns `{"mints":N}` and is not linked from the UI.
-
-Vercel as a host may still see HTTPS request metadata. This app does not write those fields down.
+- The device cookie is a random id so a retap moves you. Not a user record. Max-Age matches the hang TTL.
+- Mint counter: one integer on `POST /api/hangs`. `GET /internal/mints` returns `{"mints":N}` and is not linked from the UI.
 
 ## How a hang works
 
