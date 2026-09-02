@@ -14,7 +14,7 @@ export function isHangId(id) {
 
 export function cleanName(raw) {
   if (typeof raw !== "string") return "";
-  const name = raw.replace(/\s+/g, " ").trim();
+  const name = raw.trim();
   if (!name) return "";
   return name.slice(0, NAME_MAX);
 }
