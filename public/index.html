@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <title></title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <div id="land" class="screen land" hidden>
+        <button type="button" class="blast" id="start">we still on</button>
+      </div>
+
+      <div id="hang" class="screen hang" hidden>
+        <input
+          id="name"
+          class="name"
+          type="text"
+          maxlength="48"
+          autocomplete="nickname"
+          enterkeyhint="done"
+          autocapitalize="words"
+          spellcheck="false"
+          placeholder="your name"
+        />
+        <div class="lanes">
+          <section class="lane">
+            <button type="button" class="choice" data-status="yes">Yes</button>
+            <ul class="names" data-status="yes" hidden></ul>
+          </section>
+          <section class="lane">
+            <button type="button" class="choice" data-status="late">Late</button>
+            <ul class="names" data-status="late" hidden></ul>
+          </section>
+          <section class="lane">
+            <button type="button" class="choice" data-status="out">Out</button>
+            <ul class="names" data-status="out" hidden></ul>
+          </section>
+        </div>
+        <div id="after" class="after" hidden>
+          <button type="button" class="copy" id="copy">Copy link</button>
+          <button type="button" class="yours" id="yours">Start yours</button>
+        </div>
+      </div>
+
+      <div id="gone" class="screen land" hidden>
+        <button type="button" class="blast" id="again">gone — start</button>
+      </div>
+    </main>
+    <p id="err" class="err" hidden></p>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

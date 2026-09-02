@@ -1,0 +1,77 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { cleanName, createStore, isHangId, newHangId } from "./hang-store.js";
+
+describe("ids", () => {
+  it("mints short unguessable ids", () => {
+    const id = newHangId();
+    assert.equal(id.length, 8);
+    assert.equal(isHangId(id), true);
+    assert.equal(isHangId("abc"), false);
+  });
+});
+
+describe("names", () => {
+  it("keeps what people typed, including two Mikes", () => {
+    assert.equal(cleanName("  Mike  "), "Mike");
+    assert.equal(cleanName("mike"), "mike");
+  });
+});
+
+describe("store", () => {
+  it("start yours is a new hang, not a copy", () => {
+    const store = createStore();
+    const a = store.create();
+    store.tap(a.id, "dev-a", "Sam", "yes");
+    const b = store.create();
+    assert.notEqual(a.id, b.id);
+    assert.equal(store.view(b.id, "dev-b").people.length, 0);
+    assert.equal(store.view(a.id, "dev-a").people[0].name, "Sam");
+  });
+
+  it("two devices named Mike stay two rows", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Mike", "yes");
+    store.tap(hang.id, "d2", "Mike", "late");
+    const view = store.view(hang.id, "d1");
+    assert.equal(view.people.length, 2);
+    assert.deepEqual(
+      view.people.map((p) => p.status),
+      ["yes", "late"],
+    );
+    assert.equal(view.you.status, "yes");
+  });
+
+  it("same device retap moves that person, not a new row", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Alex", "yes");
+    store.tap(hang.id, "d1", "Alex", "out");
+    const view = store.view(hang.id, "d1");
+    assert.equal(view.people.length, 1);
+    assert.equal(view.people[0].status, "out");
+    assert.equal(view.you.status, "out");
+  });
+
+  it("changing the typed name updates this device only", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "d1", "Alex", "yes");
+    store.tap(hang.id, "d2", "Sam", "yes");
+    store.tap(hang.id, "d1", "A.", "late");
+    const view = store.view(hang.id, "d2");
+    assert.deepEqual(view.people, [
+      { name: "A.", status: "late" },
+      { name: "Sam", status: "yes" },
+    ]);
+  });
+
+  it("view never leaks device ids", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "secret-device", "Kim", "yes");
+    const json = JSON.stringify(store.view(hang.id, "secret-device"));
+    assert.equal(json.includes("secret-device"), false);
+  });
+});

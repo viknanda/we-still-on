@@ -1,0 +1,13 @@
+{
+  "name": "we-still-on",
+  "private": true,
+  "type": "module",
+  "description": "A hang is a live score: names under Yes / Late / Out.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
