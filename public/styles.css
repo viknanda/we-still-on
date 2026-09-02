@@ -42,8 +42,6 @@ input:focus-visible {
 }
 
 .wrap {
-  max-width: 28rem;
-  margin: 0 auto;
   min-height: 100dvh;
   padding: 1.25rem 1.15rem calc(2.5rem + env(safe-area-inset-bottom));
   padding-left: max(1.15rem, env(safe-area-inset-left));
