@@ -1,8 +1,8 @@
 # we-still-on
 
-A hang is a live score: names under Yes / Late / Out, plus one optional hang line (where and what in a single line).
+A hang is a live score: names under Yes / Late / Out, plus one optional hang line.
 
-This is local-only. Do not deploy it, do not put it on Vercel / Netlify / GitHub Pages, and do not tunnel it. One machine, a browser, a group chat paste of a localhost URL if you want — that’s it.
+No accounts. No cookies. No client IDs. Identity is the name you type on that hang. Hangs expire **1 hour after the last tap**.
 
 ## Run locally
 
@@ -12,33 +12,37 @@ Needs Node 18+.
 npm start
 ```
 
-Then open [http://127.0.0.1:47261](http://127.0.0.1:47261) on your phone or laptop.
-
-`npm start` serves the page and a tiny JSON API. Hangs live in memory. Restarting the server forgets them.
+Open [http://127.0.0.1:47261](http://127.0.0.1:47261).
 
 ## How a hang works
 
-1. First visit is almost blank. Tap **we still on?** That mints a new hang URL (`/h/……`) and puts you on it.
-2. The hang page is: **your name**, one optional line (**what's the hang** — e.g. Luigi's, Friday dinner), then three fat rows: **Yes**, **Late**, **Out**. Each row is the word, a count, and names quiet underneath.
-3. The hang line is where and what, together. It is optional. The first tap on this hang sets it, then it freezes. Nobody can edit it after that — not even the starter. There is no separate where field and no separate what field.
-4. After this device has tapped, **Copy link** appears. That copies *this* hang’s URL — the thing you paste into the group chat. Under it, **Start yours** mints a brand-new hang. It never copies this one.
-5. Everyone else opens the same URL. The hang line is already there and frozen. The name field is blank — type **your** name (placeholder **your name**), then tap. It is never filled in from the starter, a cookie, or anyone else. After you tap on this device, your name stays. Names show up quiet under the row they chose. Change your mind by tapping another row (same phone, same person).
-6. The page does not end. Reopen the URL to watch who moved.
+1. Tap **we still on?** → new hang URL (`/h/……`).
+2. Type **your name**, optional **what's the hang**, tap **Yes** / **Late** / **Out**.
+3. First tap freezes the hang line. Same name retap moves you. Same spelling = same person.
+4. **Copy link** (or share sheet) → paste in the group chat. **Start yours** mints a new hang.
+5. Hangs go **gone** after an hour idle.
 
-Two people named Mike stay two Mikes. Nobody is an admin.
+## Privacy
 
-## Two browsers on one machine
+- No cookies, localStorage, or device IDs
+- Hang data deleted after TTL
+- Optional aggregate counters only (`STATS_KEY` → `GET /api/stats?key=…`): created, activated (2+ people), taps — never names
 
-Identity is a cookie on this device. A second normal window in the same browser is still you.
+## Deploy (Railway)
 
-To be a second person:
+No Fly needed. Sign up at [railway.app](https://railway.app) with GitHub (free trial credit).
 
-1. In browser A, start a hang, type a name, optionally the hang line, tap **Yes**. Hit **Copy link**.
-2. Open that URL in a **private / incognito window**, or in a different browser.
-3. The name field is empty (placeholder **your name**). Type another name. Tap **Late** or **Out**. You cannot change the hang line.
-4. Both windows update on their own (they poll about every 700ms). No refresh.
+1. Push this repo to GitHub (or create a new Railway project from local).
+2. **New Project** → **Deploy from GitHub** → pick `we-still-on`  
+   (or install CLI: `npm i -g @railway/cli` → `railway login` → `railway up`)
+3. Railway detects the Dockerfile, assigns a public URL, HTTPS included.
+4. Optional: set variable `STATS_KEY` to a random string for `GET /api/stats?key=…`
 
-**Start yours** in either window opens an empty hang with a new URL. The old hang keeps its own names and hang line.
+Keep the service **always on** while you launch — hangs live in memory on that one process.
+
+### Other options
+- **Render**: same Dockerfile; free tier sleeps and wipes hangs — use a paid instance or add Redis later.
+- **Fly.io**: fine too if you create an account later (`fly deploy`).
 
 ## Tests
 

@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  HANG_TTL_MS,
   cleanLine,
   cleanName,
   createStore,
@@ -11,14 +12,15 @@ import {
 describe("ids", () => {
   it("mints short unguessable ids", () => {
     const id = newHangId();
-    assert.equal(id.length, 8);
+    assert.equal(id.length, 12);
     assert.equal(isHangId(id), true);
     assert.equal(isHangId("abc"), false);
+    assert.equal(isHangId("abcdefgh"), false);
   });
 });
 
 describe("names", () => {
-  it("keeps what people typed, including two Mikes", () => {
+  it("keeps what people typed", () => {
     assert.equal(cleanName("  Mike  "), "Mike");
     assert.equal(cleanName("mike"), "mike");
   });
@@ -28,84 +30,65 @@ describe("store", () => {
   it("start yours is a new hang, not a copy", () => {
     const store = createStore();
     const a = store.create();
-    store.tap(a.id, "dev-a", "Sam", "yes");
+    store.tap(a.id, "Sam", "yes");
     const b = store.create();
     assert.notEqual(a.id, b.id);
-    assert.equal(store.view(b.id, "dev-b").people.length, 0);
-    assert.equal(store.view(a.id, "dev-a").people[0].name, "Sam");
+    assert.equal(store.view(b.id).people.length, 0);
+    assert.equal(store.view(a.id).people[0].name, "Sam");
   });
 
-  it("two devices named Mike stay two rows", () => {
+  it("same name is one row — two Mikes collide", () => {
     const store = createStore();
     const hang = store.create();
-    store.tap(hang.id, "d1", "Mike", "yes");
-    store.tap(hang.id, "d2", "Mike", "late");
-    const view = store.view(hang.id, "d1");
+    store.tap(hang.id, "Mike", "yes");
+    store.tap(hang.id, "Mike", "late");
+    const view = store.view(hang.id);
+    assert.equal(view.people.length, 1);
+    assert.equal(view.people[0].status, "late");
+  });
+
+  it("different names stay different rows", () => {
+    const store = createStore();
+    const hang = store.create();
+    store.tap(hang.id, "Mike", "yes");
+    store.tap(hang.id, "mike", "late");
+    const view = store.view(hang.id);
     assert.equal(view.people.length, 2);
-    assert.deepEqual(
-      view.people.map((p) => p.status),
-      ["yes", "late"],
-    );
-    assert.equal(view.you.status, "yes");
   });
 
-  it("a new device sees the hang line but is not you until they tap", () => {
+  it("view has no you and no client ids", () => {
     const store = createStore();
     const hang = store.create();
-    store.tap(hang.id, "starter", "Alex", "yes", "Luigi's");
-    const joiner = store.view(hang.id, "incognito");
-    assert.equal(joiner.you, null);
-    assert.equal(joiner.line, "Luigi's");
-    assert.equal(joiner.frozen, true);
-    assert.equal(store.view(hang.id, "starter").you.name, "Alex");
+    store.tap(hang.id, "Kim", "yes");
+    const view = store.view(hang.id);
+    assert.equal("you" in view, false);
+    assert.equal(JSON.stringify(view).includes("device"), false);
   });
 
-  it("same device retap moves that person, not a new row", () => {
+  it("same name retap moves that person, not a new row", () => {
     const store = createStore();
     const hang = store.create();
-    store.tap(hang.id, "d1", "Alex", "yes");
-    store.tap(hang.id, "d1", "Alex", "out");
-    const view = store.view(hang.id, "d1");
+    store.tap(hang.id, "Alex", "yes");
+    store.tap(hang.id, "Alex", "out");
+    const view = store.view(hang.id);
     assert.equal(view.people.length, 1);
     assert.equal(view.people[0].status, "out");
-    assert.equal(view.you.status, "out");
-  });
-
-  it("changing the typed name updates this device only", () => {
-    const store = createStore();
-    const hang = store.create();
-    store.tap(hang.id, "d1", "Alex", "yes");
-    store.tap(hang.id, "d2", "Sam", "yes");
-    store.tap(hang.id, "d1", "A.", "late");
-    const view = store.view(hang.id, "d2");
-    assert.deepEqual(view.people, [
-      { name: "A.", status: "late" },
-      { name: "Sam", status: "yes" },
-    ]);
-  });
-
-  it("view never leaks device ids", () => {
-    const store = createStore();
-    const hang = store.create();
-    store.tap(hang.id, "secret-device", "Kim", "yes");
-    const json = JSON.stringify(store.view(hang.id, "secret-device"));
-    assert.equal(json.includes("secret-device"), false);
   });
 
   it("first tap freezes the hang line, later taps cannot change it", () => {
     const store = createStore();
     const hang = store.create();
-    const before = store.view(hang.id, "d1");
+    const before = store.view(hang.id);
     assert.equal(before.frozen, false);
     assert.equal(before.line, "");
 
-    store.tap(hang.id, "d1", "Alex", "yes", "Luigi's");
-    assert.equal(store.view(hang.id, "d1").line, "Luigi's");
-    assert.equal(store.view(hang.id, "d1").frozen, true);
+    store.tap(hang.id, "Alex", "yes", "Luigi's");
+    assert.equal(store.view(hang.id).line, "Luigi's");
+    assert.equal(store.view(hang.id).frozen, true);
 
-    store.tap(hang.id, "d1", "Alex", "late", "Friday dinner");
-    store.tap(hang.id, "d2", "Sam", "out", "somewhere else");
-    const view = store.view(hang.id, "d2");
+    store.tap(hang.id, "Alex", "late", "Friday dinner");
+    store.tap(hang.id, "Sam", "out", "somewhere else");
+    const view = store.view(hang.id);
     assert.equal(view.line, "Luigi's");
     assert.equal(view.frozen, true);
   });
@@ -113,9 +96,9 @@ describe("store", () => {
   it("empty hang line still freezes on first tap", () => {
     const store = createStore();
     const hang = store.create();
-    store.tap(hang.id, "d1", "Alex", "yes", "  ");
-    store.tap(hang.id, "d2", "Sam", "late", "Friday dinner");
-    const view = store.view(hang.id, "d1");
+    store.tap(hang.id, "Alex", "yes", "  ");
+    store.tap(hang.id, "Sam", "late", "Friday dinner");
+    const view = store.view(hang.id);
     assert.equal(view.line, "");
     assert.equal(view.frozen, true);
   });
@@ -123,11 +106,47 @@ describe("store", () => {
   it("start yours does not copy the hang line", () => {
     const store = createStore();
     const a = store.create();
-    store.tap(a.id, "d1", "Sam", "yes", "Luigi's");
+    store.tap(a.id, "Sam", "yes", "Luigi's");
     const b = store.create();
-    const view = store.view(b.id, "d1");
+    const view = store.view(b.id);
     assert.equal(view.frozen, false);
     assert.equal(view.line, "");
+  });
+
+  it("expires one hour after last tap", () => {
+    let t = 1_000_000;
+    const store = createStore({ ttlMs: HANG_TTL_MS, now: () => t });
+    const hang = store.create();
+    store.tap(hang.id, "Sam", "yes");
+    t += HANG_TTL_MS - 1;
+    assert.ok(store.view(hang.id));
+    t += 2;
+    assert.equal(store.view(hang.id), null);
+  });
+
+  it("create counts as activity for ttl", () => {
+    let t = 1_000_000;
+    const store = createStore({ ttlMs: HANG_TTL_MS, now: () => t });
+    const hang = store.create();
+    t += HANG_TTL_MS - 1;
+    assert.ok(store.view(hang.id));
+    t += 2;
+    assert.equal(store.view(hang.id), null);
+  });
+
+  it("tracks aggregate counters only", () => {
+    const store = createStore();
+    const a = store.create();
+    store.tap(a.id, "Sam", "yes");
+    assert.deepEqual(store.stats(), {
+      hangsCreated: 1,
+      hangsActivated: 0,
+      taps: 1,
+      hangsLive: 1,
+    });
+    store.tap(a.id, "Alex", "late");
+    assert.equal(store.stats().hangsActivated, 1);
+    assert.equal(store.stats().taps, 2);
   });
 });
 

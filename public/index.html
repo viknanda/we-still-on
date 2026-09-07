@@ -7,13 +7,34 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="robots" content="noindex, nofollow" />
-    <title></title>
+    <meta name="theme-color" content="#f0c4a8" />
+    <title>{{OG_TITLE}}</title>
+    <meta name="description" content="{{OG_DESC}}" />
+    <meta property="og:title" content="{{OG_TITLE}}" />
+    <meta property="og:description" content="{{OG_DESC}}" />
+    <meta property="og:url" content="{{OG_URL}}" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{{OG_TITLE}}" />
+    <meta name="twitter:description" content="{{OG_DESC}}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="grain" aria-hidden="true"></div>
     <main class="wrap">
       <div id="land" class="screen land" hidden>
-        <button type="button" class="blast" id="start">we still on?</button>
+        <button type="button" class="blast" id="start">
+          <span class="blast-line">we</span>
+          <span class="blast-line">still</span>
+          <span class="blast-line">on?</span>
+        </button>
+        <p class="hint">tap to start a hang</p>
       </div>
 
       <div id="hang" class="screen hang" hidden>
@@ -73,7 +94,11 @@
       </div>
 
       <div id="gone" class="screen land" hidden>
-        <button type="button" class="blast" id="again">gone — start</button>
+        <button type="button" class="blast" id="again">
+          <span class="blast-line">gone</span>
+          <span class="blast-line">— start</span>
+        </button>
+        <p class="hint">tap for a new hang</p>
       </div>
     </main>
     <p id="err" class="err" hidden></p>

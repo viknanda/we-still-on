@@ -16,6 +16,7 @@ const hangId = match ? match[1] : null;
 
 let pollTimer = 0;
 let lastJson = "";
+let lastView = null;
 let busy = false;
 let typedName = false;
 let focusedName = false;
@@ -36,6 +37,10 @@ function flash(msg) {
   }
 }
 
+function myName() {
+  return nameEl.value.trim();
+}
+
 async function createHang() {
   if (busy) return;
   busy = true;
@@ -52,6 +57,14 @@ async function createHang() {
 
 async function copyLink() {
   const url = location.href;
+  if (navigator.share) {
+    try {
+      await navigator.share({ url, title: "we still on?" });
+      return;
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+    }
+  }
   try {
     await navigator.clipboard.writeText(url);
   } catch {
@@ -83,27 +96,30 @@ function paintLine(view) {
 }
 
 function paint(view) {
-  const signed = Boolean(view.you);
+  lastView = view;
+  const mine = myName();
+  const signed = Boolean(mine && view.people.some((p) => p.name === mine));
   after.hidden = !signed;
-  if (signed) {
-    if (view.you.name && !typedName && nameEl.value === "") {
-      nameEl.value = view.you.name;
-    }
-  } else if (!typedName) {
-    nameEl.value = "";
+
+  if (!typedName && !mine) {
     if (!focusedName) {
       focusedName = true;
       queueMicrotask(() => nameEl.focus());
     }
   }
+
   paintLine(view);
+
+  const myStatus = mine
+    ? view.people.find((p) => p.name === mine)?.status
+    : null;
 
   for (const status of ["yes", "late", "out"]) {
     const row = document.querySelector(`.row[data-status="${status}"]`);
     const countEl = document.querySelector(`[data-count="${status}"]`);
     const list = document.querySelector(`.names[data-status="${status}"]`);
     const names = view.people.filter((p) => p.status === status);
-    row.classList.toggle("mine", view.you?.status === status);
+    row.classList.toggle("mine", myStatus === status);
     countEl.textContent = String(names.length);
     list.replaceChildren();
     for (const person of names) {
@@ -128,8 +144,8 @@ async function pull() {
   if (snap !== lastJson) {
     lastJson = snap;
     paint(view);
-  } else if (!view.you && !typedName && nameEl.value) {
-    nameEl.value = "";
+  } else if (lastView) {
+    paint(lastView);
   }
   return view;
 }
@@ -166,6 +182,12 @@ async function tap(status) {
     const view = await res.json();
     lastJson = JSON.stringify(view);
     paint(view);
+    const row = document.querySelector(`.row[data-status="${status}"]`);
+    if (row) {
+      row.classList.remove("slam");
+      void row.offsetWidth;
+      row.classList.add("slam");
+    }
   } catch {
     flash("couldn’t tap");
   } finally {
@@ -193,6 +215,7 @@ function blurOnEnter(el) {
 
 nameEl.addEventListener("input", () => {
   typedName = nameEl.value.length > 0;
+  if (lastView) paint(lastView);
 });
 
 nameEl.addEventListener("focus", () => {
@@ -209,5 +232,5 @@ if (!hangId) {
   pull().catch(() => flash("couldn’t load"));
   pollTimer = setInterval(() => {
     pull().catch(() => {});
-  }, 700);
+  }, 2000);
 }

@@ -7,41 +7,15 @@ import { createStore, isHangId } from "./hang-store.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, "public");
 const PORT = Number(process.env.PORT) || 47261;
-const HOST = process.env.HOST || "127.0.0.1";
-const COOKIE = "wso";
-const YEAR = 60 * 60 * 24 * 365;
+const HOST = process.env.HOST || "0.0.0.0";
+const STATS_KEY = process.env.STATS_KEY || "";
+const INDEX = path.join(PUBLIC, "index.html");
 
 const store = createStore();
-
-function parseCookies(header) {
-  const out = {};
-  if (!header) return out;
-  for (const part of header.split(";")) {
-    const i = part.indexOf("=");
-    if (i === -1) continue;
-    const k = part.slice(0, i).trim();
-    const v = part.slice(i + 1).trim();
-    if (k) out[k] = decodeURIComponent(v);
-  }
-  return out;
-}
-
-function deviceIdFrom(req) {
-  const cookies = parseCookies(req.headers.cookie);
-  if (cookies[COOKIE] && /^[A-Za-z0-9_-]{8,64}$/.test(cookies[COOKIE])) {
-    return cookies[COOKIE];
-  }
-  return Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString(
-    "base64url",
-  );
-}
+setInterval(() => store.sweep(), 60_000).unref();
 
 function send(res, status, body, headers = {}) {
   const extra = { ...headers };
-  if (res._did && !extra["Set-Cookie"]) {
-    extra["Set-Cookie"] =
-      `${COOKIE}=${encodeURIComponent(res._did)}; Path=/; Max-Age=${YEAR}; SameSite=Lax`;
-  }
   if (typeof body === "string" || Buffer.isBuffer(body)) {
     res.writeHead(status, extra);
     res.end(body);
@@ -87,6 +61,46 @@ const TYPES = {
   ".ico": "image/x-icon",
 };
 
+function escapeHtml(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function serveIndex(res, req, hangId) {
+  fs.readFile(INDEX, "utf8", (err, html) => {
+    if (err) {
+      send(res, 404, "gone", { "Content-Type": "text/plain; charset=utf-8" });
+      return;
+    }
+    const proto = req.headers["x-forwarded-proto"] || "http";
+    const host = req.headers.host || "127.0.0.1";
+    const origin = `${proto}://${host}`;
+    const url = hangId ? `${origin}/h/${hangId}` : origin;
+    let title = "we still on?";
+    let desc = "tap yes, late, or out. share the link.";
+    if (hangId) {
+      const view = store.view(hangId);
+      if (view?.line) {
+        title = view.line;
+        desc = "we still on? yes · late · out";
+      } else if (view) {
+        title = "we still on?";
+      }
+    }
+    const injected = html
+      .replaceAll("{{OG_TITLE}}", escapeHtml(title))
+      .replaceAll("{{OG_DESC}}", escapeHtml(desc))
+      .replaceAll("{{OG_URL}}", escapeHtml(url));
+    send(res, 200, injected, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+    });
+  });
+}
+
 function serveFile(res, filePath) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
@@ -102,7 +116,14 @@ function serveFile(res, filePath) {
 }
 
 async function handleApi(req, res, url) {
-  const did = res._did;
+  if (req.method === "GET" && url.pathname === "/api/stats") {
+    if (!STATS_KEY || url.searchParams.get("key") !== STATS_KEY) {
+      send(res, 404, { error: "gone" });
+      return;
+    }
+    send(res, 200, store.stats());
+    return;
+  }
 
   if (req.method === "POST" && url.pathname === "/api/hangs") {
     const hang = store.create();
@@ -116,7 +137,7 @@ async function handleApi(req, res, url) {
       send(res, 404, { error: "gone" });
       return;
     }
-    const view = store.view(one[1], did);
+    const view = store.view(one[1]);
     if (!view) {
       send(res, 404, { error: "gone" });
       return;
@@ -141,7 +162,6 @@ async function handleApi(req, res, url) {
     }
     const result = store.tap(
       tap[1],
-      did,
       payload.name,
       payload.status,
       payload.line,
@@ -154,7 +174,7 @@ async function handleApi(req, res, url) {
       send(res, 400, { error: result.error });
       return;
     }
-    send(res, 200, store.view(tap[1], did));
+    send(res, 200, store.view(tap[1]));
     return;
   }
 
@@ -162,9 +182,6 @@ async function handleApi(req, res, url) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const did = deviceIdFrom(req);
-  res._did = did;
-
   let url;
   try {
     url = new URL(req.url, `http://${req.headers.host || "127.0.0.1"}`);
@@ -187,8 +204,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname === "/" || url.pathname.startsWith("/h/")) {
-    serveFile(res, path.join(PUBLIC, "index.html"));
+  if (url.pathname === "/") {
+    serveIndex(res, req, null);
+    return;
+  }
+
+  const hangPath = url.pathname.match(/^\/h\/([A-Za-z0-9_-]+)$/);
+  if (hangPath) {
+    serveIndex(res, req, hangPath[1]);
     return;
   }
 
@@ -202,5 +225,4 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`we-still-on  http://${HOST}:${PORT}`);
-  console.log("local only. do not deploy.");
 });
