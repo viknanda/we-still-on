@@ -15,6 +15,10 @@ primary_region = "sjc"
   min_machines_running = 1
   processes = ["app"]
 
+[[mounts]]
+  source = "wso_data"
+  destination = "/data"
+
 [[vm]]
   size = "shared-cpu-1x"
   memory = "256mb"

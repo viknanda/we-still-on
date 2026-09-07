@@ -3,16 +3,21 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createStore, isHangId } from "./hang-store.js";
+import { createStatsStore } from "./stats-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, "public");
 const PORT = Number(process.env.PORT) || 47261;
 const HOST = process.env.HOST || "0.0.0.0";
 const STATS_KEY = process.env.STATS_KEY || "";
+const STATS_DB =
+  process.env.STATS_DB || path.join(__dirname, "data", "stats.sqlite");
 const INDEX = path.join(PUBLIC, "index.html");
 
-const store = createStore();
+const stats = createStatsStore({ dbPath: STATS_DB });
+const store = createStore({ stats });
 setInterval(() => store.sweep(), 60_000).unref();
+setInterval(() => stats.prune(), 60 * 60 * 1000).unref();
 
 function send(res, status, body, headers = {}) {
   const extra = { ...headers };
@@ -122,6 +127,20 @@ async function handleApi(req, res, url) {
       return;
     }
     send(res, 200, store.stats());
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/stats/series") {
+    if (!STATS_KEY || url.searchParams.get("key") !== STATS_KEY) {
+      send(res, 404, { error: "gone" });
+      return;
+    }
+    const from = url.searchParams.get("from") || undefined;
+    const to = url.searchParams.get("to") || undefined;
+    send(res, 200, {
+      totals: store.stats(),
+      series: stats.series(from, to),
+    });
     return;
   }
 

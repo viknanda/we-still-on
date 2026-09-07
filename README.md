@@ -6,13 +6,15 @@ No accounts. No cookies. No client IDs. Identity is the name you type on that ha
 
 ## Run locally
 
-Needs Node 18+.
+Needs Node 22+.
 
 ```bash
 npm start
 ```
 
 Open [http://127.0.0.1:47261](http://127.0.0.1:47261).
+
+Local stats DB defaults to `./data/stats.sqlite` (gitignored).
 
 ## How a hang works
 
@@ -22,27 +24,35 @@ Open [http://127.0.0.1:47261](http://127.0.0.1:47261).
 4. **Copy link** (or share sheet) → paste in the group chat. **Start yours** mints a new hang.
 5. Hangs go **gone** after an hour idle.
 
-## Privacy
+## Privacy & stats
 
 - No cookies, localStorage, or device IDs
-- Hang data deleted after TTL
-- Optional aggregate counters only (`STATS_KEY` → `GET /api/stats?key=…`): created, activated (2+ people), taps — never names
+- Hang payloads deleted after TTL
+- Usage is **aggregate only**, stored as UTC hourly buckets in SQLite (90-day retention): created, activated (2+ people), taps — never names
 
-## Deploy (Railway)
+With `STATS_KEY` set:
 
-No Fly needed. Sign up at [railway.app](https://railway.app) with GitHub (free trial credit).
+```bash
+# lifetime totals (+ live hang count)
+curl "https://we-still-on.fly.dev/api/stats?key=$STATS_KEY"
 
-1. Push this repo to GitHub (or create a new Railway project from local).
-2. **New Project** → **Deploy from GitHub** → pick `we-still-on`  
-   (or install CLI: `npm i -g @railway/cli` → `railway login` → `railway up`)
-3. Railway detects the Dockerfile, assigns a public URL, HTTPS included.
-4. Optional: set variable `STATS_KEY` to a random string for `GET /api/stats?key=…`
+# hourly timeseries
+curl "https://we-still-on.fly.dev/api/stats/series?key=$STATS_KEY"
+curl "https://we-still-on.fly.dev/api/stats/series?key=$STATS_KEY&from=2026-09-07T00&to=2026-09-07T23"
+```
 
-Keep the service **always on** while you launch — hangs live in memory on that one process.
+Optional local snapshot: `node scripts/harvest-stats.mjs` (uses `.wso-stats-key`).
 
-### Other options
-- **Render**: same Dockerfile; free tier sleeps and wipes hangs — use a paid instance or add Redis later.
-- **Fly.io**: fine too if you create an account later (`fly deploy`).
+## Deploy (Fly.io)
+
+```bash
+# one-time volume for durable stats
+fly volumes create wso_data --region sjc --size 1 -a we-still-on
+
+fly deploy --ha=false -a we-still-on
+```
+
+`fly.toml` mounts `wso_data` at `/data` → `STATS_DB=/data/stats.sqlite`. Keep **one** machine (`--ha=false`) so in-memory hangs stay consistent.
 
 ## Tests
 

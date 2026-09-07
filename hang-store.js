@@ -30,7 +30,8 @@ export function createStore(opts = {}) {
   const hangs = new Map();
   const ttlMs = opts.ttlMs ?? HANG_TTL_MS;
   const now = opts.now ?? (() => Date.now());
-  const stats = {
+  const stats = opts.stats ?? null;
+  const mem = {
     hangsCreated: 0,
     hangsActivated: 0,
     taps: 0,
@@ -59,7 +60,8 @@ export function createStore(opts = {}) {
 
   return {
     stats() {
-      return { ...stats, hangsLive: hangs.size };
+      const totals = stats ? stats.totals() : { ...mem };
+      return { ...totals, hangsLive: hangs.size };
     },
 
     sweep,
@@ -76,7 +78,8 @@ export function createStore(opts = {}) {
         touchedAt: now(),
       };
       hangs.set(id, hang);
-      stats.hangsCreated += 1;
+      mem.hangsCreated += 1;
+      stats?.recordCreated();
       return hang;
     },
 
@@ -106,9 +109,11 @@ export function createStore(opts = {}) {
         hang.people.push({ name, status });
       }
 
-      stats.taps += 1;
+      mem.taps += 1;
+      stats?.recordTap();
       if (before < 2 && hang.people.length >= 2) {
-        stats.hangsActivated += 1;
+        mem.hangsActivated += 1;
+        stats?.recordActivated();
       }
       touch(hang);
       return { hang };

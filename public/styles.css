@@ -97,9 +97,13 @@ input:focus-visible {
 
 .blast {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.06em;
   text-align: left;
   font-size: clamp(3.2rem, 19cqw, 4rem);
-  line-height: 0.9;
+  line-height: 1;
   letter-spacing: 0.01em;
   font-weight: 800;
   text-transform: none;
@@ -108,6 +112,10 @@ input:focus-visible {
 
 .blast-line {
   display: block;
+  line-height: 1;
+  /* keep descenders (g) and marks (') from stealing uneven gap */
+  padding-bottom: 0.04em;
+  margin-bottom: -0.04em;
 }
 
 .blast:active {
