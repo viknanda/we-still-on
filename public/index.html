@@ -60,45 +60,18 @@
           placeholder="your name"
           value=""
         />
-        <div class="hangrow">
-          <input
-            id="line"
-            class="hangline"
-            type="text"
-            maxlength="64"
-            autocomplete="off"
-            enterkeyhint="done"
-            autocapitalize="sentences"
-            spellcheck="false"
-            placeholder="what's the hang"
-          />
-          <p id="frozen" class="hangline frozen" hidden></p>
-          <div
-            id="expire"
-            class="expire"
-            role="radiogroup"
-            aria-label="expires in"
-          >
-            <button
-              type="button"
-              class="expire-opt"
-              role="radio"
-              data-hours="1"
-              aria-checked="true"
-            >
-              1h
-            </button>
-            <button
-              type="button"
-              class="expire-opt"
-              role="radio"
-              data-hours="24"
-              aria-checked="false"
-            >
-              24h
-            </button>
-          </div>
-        </div>
+        <input
+          id="line"
+          class="hangline"
+          type="text"
+          maxlength="64"
+          autocomplete="off"
+          enterkeyhint="done"
+          autocapitalize="sentences"
+          spellcheck="false"
+          placeholder="what's the hang"
+        />
+        <p id="frozen" class="hangline frozen" hidden></p>
         <div class="lanes">
           <button type="button" class="row" data-status="yes">
             <span class="head">
@@ -121,6 +94,34 @@
             </span>
             <span class="names" data-status="out"></span>
           </button>
+        </div>
+        <div class="expire-row">
+          <span class="expire-label">this hang lives for</span>
+          <div
+            id="expire"
+            class="expire"
+            role="radiogroup"
+            aria-label="this hang lives for"
+          >
+            <button
+              type="button"
+              class="expire-opt"
+              role="radio"
+              data-hours="1"
+              aria-checked="true"
+            >
+              1h
+            </button>
+            <button
+              type="button"
+              class="expire-opt"
+              role="radio"
+              data-hours="24"
+              aria-checked="false"
+            >
+              24h
+            </button>
+          </div>
         </div>
         <div id="after" class="after" hidden>
           <button type="button" class="copy" id="copy">Copy link</button>

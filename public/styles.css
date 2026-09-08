@@ -147,49 +147,27 @@ input:focus-visible {
   border-radius: 0;
   margin: 0;
   padding: 0.35rem 0 0.4rem;
-  line-height: 1.1;
-  font-weight: 800;
+  font-size: clamp(1.05rem, 5cqw, 1.15rem);
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--muted);
 }
 
 .name {
-  font-size: clamp(2.05rem, 11.5cqw, 2.55rem);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
 }
 
 .hangline {
   margin-top: 0.45rem;
-  font-size: clamp(1.35rem, 7cqw, 1.55rem);
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.name::placeholder {
-  color: var(--ink);
-  opacity: 0.38;
-  font-weight: 700;
-}
-
-.hangline::placeholder {
-  color: var(--ink);
-  opacity: 0.32;
-  font-weight: 600;
-}
-
-.hangrow {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin-top: 0.45rem;
-  padding-bottom: 0.15rem;
-}
-
-.hangrow .hangline {
-  flex: 1;
-  min-width: 0;
-  margin-top: 0;
   border-bottom: 0;
-  padding-top: 0.2rem;
-  padding-bottom: 0.15rem;
+}
+
+.name::placeholder,
+.hangline::placeholder {
+  color: var(--muted);
+  opacity: 1;
+  font-weight: 500;
 }
 
 .hangline.frozen {
@@ -198,6 +176,25 @@ input:focus-visible {
   overflow-wrap: anywhere;
   padding-left: 0;
   padding-right: 0;
+}
+
+.expire-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.35rem;
+}
+
+.expire-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-size: clamp(1.05rem, 5cqw, 1.15rem);
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--muted);
 }
 
 .expire {
@@ -242,7 +239,6 @@ input:focus-visible {
   margin-top: 1.15rem;
   display: flex;
   flex-direction: column;
-  border-top: 1.5px solid var(--hair);
 }
 
 @keyframes need {
@@ -274,7 +270,7 @@ input:focus-visible {
 
 .row[data-status="yes"] .word,
 .row[data-status="yes"] .count {
-  color: var(--ink);
+  color: var(--out);
 }
 
 .row[data-status="late"] .word,
@@ -284,7 +280,7 @@ input:focus-visible {
 
 .row[data-status="out"] .word,
 .row[data-status="out"] .count {
-  color: var(--out);
+  color: var(--ink);
 }
 
 .row:active,
