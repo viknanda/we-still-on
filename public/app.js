@@ -4,6 +4,7 @@ const goneEl = document.getElementById("gone");
 const nameEl = document.getElementById("who");
 const lineEl = document.getElementById("line");
 const frozenEl = document.getElementById("frozen");
+const expireEl = document.getElementById("expire");
 const after = document.getElementById("after");
 const err = document.getElementById("err");
 const copyBtn = document.getElementById("copy");
@@ -20,6 +21,7 @@ let lastView = null;
 let busy = false;
 let typedName = false;
 let focusedName = false;
+let ttlHours = 1;
 
 function show(el) {
   land.hidden = el !== land;
@@ -39,6 +41,15 @@ function flash(msg) {
 
 function myName() {
   return nameEl.value.trim();
+}
+
+function setTtlHours(hours, { locked = false } = {}) {
+  ttlHours = hours === 24 ? 24 : 1;
+  for (const btn of expireEl.querySelectorAll(".expire-opt")) {
+    const on = Number(btn.dataset.hours) === ttlHours;
+    btn.setAttribute("aria-checked", on ? "true" : "false");
+  }
+  expireEl.classList.toggle("is-locked", locked);
 }
 
 async function createHang() {
@@ -109,6 +120,11 @@ function paint(view) {
   }
 
   paintLine(view);
+  if (view.ttlLocked) {
+    setTtlHours(view.ttlHours ?? 1, { locked: true });
+  } else {
+    setTtlHours(ttlHours, { locked: false });
+  }
 
   const myStatus = mine
     ? view.people.find((p) => p.name === mine)?.status
@@ -165,7 +181,12 @@ async function tap(status) {
     const res = await fetch(`/api/hangs/${hangId}/tap`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, status, line: lineEl.value }),
+      body: JSON.stringify({
+        name,
+        status,
+        line: lineEl.value,
+        ttlHours,
+      }),
     });
     if (res.status === 404) {
       show(goneEl);
@@ -204,6 +225,13 @@ for (const row of document.querySelectorAll(".row")) {
   row.addEventListener("click", () => tap(row.dataset.status));
 }
 
+for (const btn of expireEl.querySelectorAll(".expire-opt")) {
+  btn.addEventListener("click", () => {
+    if (expireEl.classList.contains("is-locked")) return;
+    setTtlHours(Number(btn.dataset.hours));
+  });
+}
+
 function blurOnEnter(el) {
   el.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -229,8 +257,13 @@ if (!hangId) {
   show(land);
 } else {
   show(hangEl);
+  setTtlHours(1);
   pull().catch(() => flash("couldn’t load"));
   pollTimer = setInterval(() => {
     pull().catch(() => {});
   }, 2000);
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
 }

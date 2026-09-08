@@ -175,17 +175,74 @@ input:focus-visible {
   font-weight: 600;
 }
 
+.hangrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.45rem;
+  padding-bottom: 0.15rem;
+}
+
+.hangrow .hangline {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+  border-bottom: 0;
+  padding-top: 0.2rem;
+  padding-bottom: 0.15rem;
+}
+
 .hangline.frozen {
   min-height: 1.35em;
   cursor: default;
   overflow-wrap: anywhere;
-  border-bottom-color: transparent;
   padding-left: 0;
   padding-right: 0;
 }
 
+.expire {
+  display: flex;
+  flex-shrink: 0;
+  padding: 0.14rem;
+  border-radius: 9px;
+  background: rgba(14, 14, 14, 0.1);
+  gap: 0;
+}
+
+.expire-opt {
+  min-width: 2.6rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: 7px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+.expire-opt[aria-checked="true"] {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 0.5px 1px rgba(14, 14, 14, 0.18);
+}
+
+.expire.is-locked .expire-opt {
+  pointer-events: none;
+}
+
+.expire.is-locked .expire-opt[aria-checked="false"] {
+  opacity: 0.35;
+}
+
 .name.need {
   animation: need 0.28s ease-out;
+}
+
+.lanes {
+  margin-top: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  border-top: 1.5px solid var(--hair);
 }
 
 @keyframes need {
@@ -199,13 +256,6 @@ input:focus-visible {
   75% {
     transform: translateX(6px);
   }
-}
-
-.lanes {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  border-top: 1.5px solid var(--hair);
 }
 
 .row {

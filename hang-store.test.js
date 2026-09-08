@@ -148,6 +148,29 @@ describe("store", () => {
     assert.equal(store.stats().hangsActivated, 1);
     assert.equal(store.stats().taps, 2);
   });
+
+  it("locks ttl hours on first tap", () => {
+    const store = createStore();
+    const hang = store.create();
+    assert.equal(store.view(hang.id).ttlHours, 1);
+    assert.equal(store.view(hang.id).ttlLocked, false);
+    store.tap(hang.id, "Sam", "yes", "", 24);
+    assert.equal(store.view(hang.id).ttlHours, 24);
+    assert.equal(store.view(hang.id).ttlLocked, true);
+    store.tap(hang.id, "Sam", "late", "", 1);
+    assert.equal(store.view(hang.id).ttlHours, 24);
+  });
+
+  it("24h hang outlives one hour idle", () => {
+    let t = 1_000_000;
+    const store = createStore({ now: () => t });
+    const hang = store.create();
+    store.tap(hang.id, "Sam", "yes", "", 24);
+    t += HANG_TTL_MS + 1;
+    assert.ok(store.view(hang.id));
+    t += 23 * HANG_TTL_MS;
+    assert.equal(store.view(hang.id), null);
+  });
 });
 
 describe("hang line", () => {

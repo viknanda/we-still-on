@@ -3,6 +3,7 @@ const ID_BYTES = 9;
 const NAME_MAX = 48;
 const LINE_MAX = 64;
 export const HANG_TTL_MS = 60 * 60 * 1000;
+export const TTL_HOURS = new Set([1, 24]);
 
 export function newHangId() {
   return Buffer.from(crypto.getRandomValues(new Uint8Array(ID_BYTES))).toString(
@@ -26,16 +27,26 @@ export function cleanLine(raw) {
   return raw.trim().slice(0, LINE_MAX);
 }
 
+export function cleanTtlHours(raw) {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (TTL_HOURS.has(n)) return n;
+  return 1;
+}
+
 export function createStore(opts = {}) {
   const hangs = new Map();
-  const ttlMs = opts.ttlMs ?? HANG_TTL_MS;
   const now = opts.now ?? (() => Date.now());
   const stats = opts.stats ?? null;
+  const persist = opts.persist ?? null;
   const mem = {
     hangsCreated: 0,
     hangsActivated: 0,
     taps: 0,
   };
+
+  function ttlMs(hang) {
+    return (hang.ttlHours || 1) * HANG_TTL_MS;
+  }
 
   function touch(hang) {
     hang.touchedAt = now();
@@ -44,8 +55,9 @@ export function createStore(opts = {}) {
   function alive(id) {
     const hang = hangs.get(id);
     if (!hang) return null;
-    if (now() - hang.touchedAt > ttlMs) {
+    if (now() - hang.touchedAt > ttlMs(hang)) {
       hangs.delete(id);
+      persist?.remove?.(id);
       return null;
     }
     return hang;
@@ -54,7 +66,24 @@ export function createStore(opts = {}) {
   function sweep() {
     const t = now();
     for (const [id, hang] of hangs) {
-      if (t - hang.touchedAt > ttlMs) hangs.delete(id);
+      if (t - hang.touchedAt > ttlMs(hang)) {
+        hangs.delete(id);
+        persist?.remove?.(id);
+      }
+    }
+  }
+
+  function save(hang) {
+    persist?.save?.(hang);
+  }
+
+  if (persist?.loadAll) {
+    for (const hang of persist.loadAll()) {
+      if (now() - hang.touchedAt <= ttlMs(hang)) {
+        hangs.set(hang.id, hang);
+      } else {
+        persist.remove?.(hang.id);
+      }
     }
   }
 
@@ -75,9 +104,12 @@ export function createStore(opts = {}) {
         people: [],
         line: "",
         frozen: false,
+        ttlHours: 1,
+        ttlLocked: false,
         touchedAt: now(),
       };
       hangs.set(id, hang);
+      save(hang);
       mem.hangsCreated += 1;
       stats?.recordCreated();
       return hang;
@@ -87,7 +119,7 @@ export function createStore(opts = {}) {
       return alive(id);
     },
 
-    tap(id, rawName, rawStatus, rawLine) {
+    tap(id, rawName, rawStatus, rawLine, rawTtlHours) {
       const hang = alive(id);
       if (!hang) return { error: "gone" };
       const name = cleanName(rawName);
@@ -99,6 +131,10 @@ export function createStore(opts = {}) {
       if (!hang.frozen) {
         hang.line = cleanLine(rawLine);
         hang.frozen = true;
+      }
+      if (!hang.ttlLocked) {
+        hang.ttlHours = cleanTtlHours(rawTtlHours);
+        hang.ttlLocked = true;
       }
 
       const before = hang.people.length;
@@ -116,6 +152,7 @@ export function createStore(opts = {}) {
         stats?.recordActivated();
       }
       touch(hang);
+      save(hang);
       return { hang };
     },
 
@@ -126,6 +163,8 @@ export function createStore(opts = {}) {
         id: hang.id,
         line: hang.line,
         frozen: hang.frozen,
+        ttlHours: hang.ttlHours,
+        ttlLocked: hang.ttlLocked,
         people: hang.people.map(({ name, status }) => ({ name, status })),
       };
     },

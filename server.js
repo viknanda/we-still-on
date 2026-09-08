@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createStore, isHangId } from "./hang-store.js";
 import { createStatsStore } from "./stats-store.js";
+import { createHangPersist } from "./hang-persist.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, "public");
@@ -15,7 +16,8 @@ const STATS_DB =
 const INDEX = path.join(PUBLIC, "index.html");
 
 const stats = createStatsStore({ dbPath: STATS_DB });
-const store = createStore({ stats });
+const persist = createHangPersist(STATS_DB);
+const store = createStore({ stats, persist });
 setInterval(() => store.sweep(), 60_000).unref();
 setInterval(() => stats.prune(), 60 * 60 * 1000).unref();
 
@@ -64,6 +66,8 @@ const TYPES = {
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
+  ".png": "image/png",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 
 function escapeHtml(s) {
@@ -184,6 +188,7 @@ async function handleApi(req, res, url) {
       payload.name,
       payload.status,
       payload.line,
+      payload.ttlHours,
     );
     if (result.error === "gone") {
       send(res, 404, { error: "gone" });

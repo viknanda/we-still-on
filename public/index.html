@@ -8,6 +8,13 @@
     />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#f0c4a8" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="hang?" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <title>{{OG_TITLE}}</title>
     <meta name="description" content="{{OG_DESC}}" />
     <meta property="og:title" content="{{OG_TITLE}}" />
@@ -52,18 +59,45 @@
           placeholder="your name"
           value=""
         />
-        <input
-          id="line"
-          class="hangline"
-          type="text"
-          maxlength="64"
-          autocomplete="off"
-          enterkeyhint="done"
-          autocapitalize="sentences"
-          spellcheck="false"
-          placeholder="what's the hang"
-        />
-        <p id="frozen" class="hangline frozen" hidden></p>
+        <div class="hangrow">
+          <input
+            id="line"
+            class="hangline"
+            type="text"
+            maxlength="64"
+            autocomplete="off"
+            enterkeyhint="done"
+            autocapitalize="sentences"
+            spellcheck="false"
+            placeholder="what's the hang"
+          />
+          <p id="frozen" class="hangline frozen" hidden></p>
+          <div
+            id="expire"
+            class="expire"
+            role="radiogroup"
+            aria-label="expires in"
+          >
+            <button
+              type="button"
+              class="expire-opt"
+              role="radio"
+              data-hours="1"
+              aria-checked="true"
+            >
+              1h
+            </button>
+            <button
+              type="button"
+              class="expire-opt"
+              role="radio"
+              data-hours="24"
+              aria-checked="false"
+            >
+              24h
+            </button>
+          </div>
+        </div>
         <div class="lanes">
           <button type="button" class="row" data-status="yes">
             <span class="head">
