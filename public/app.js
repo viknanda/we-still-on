@@ -137,6 +137,9 @@ function paint(view) {
     const names = view.people.filter((p) => p.status === status);
     row.classList.toggle("mine", myStatus === status);
     countEl.textContent = String(names.length);
+    const nextKey = names.map((p) => p.name).join("\0");
+    if (list.dataset.key === nextKey) continue;
+    list.dataset.key = nextKey;
     list.replaceChildren();
     for (const person of names) {
       const who = document.createElement("span");
@@ -157,12 +160,9 @@ async function pull() {
   if (!res.ok) throw new Error("nope");
   const view = await res.json();
   const snap = JSON.stringify(view);
-  if (snap !== lastJson) {
-    lastJson = snap;
-    paint(view);
-  } else if (lastView) {
-    paint(lastView);
-  }
+  if (snap === lastJson) return view;
+  lastJson = snap;
+  paint(view);
   return view;
 }
 
