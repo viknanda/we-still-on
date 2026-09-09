@@ -4,7 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createStore, isHangId } from "./hang-store.js";
 import { createStatsStore } from "./stats-store.js";
-import { createHangPersist } from "./hang-persist.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, "public");
@@ -16,8 +15,7 @@ const STATS_DB =
 const INDEX = path.join(PUBLIC, "index.html");
 
 const stats = createStatsStore({ dbPath: STATS_DB });
-const persist = createHangPersist(STATS_DB);
-const store = createStore({ stats, persist });
+const store = createStore({ stats });
 setInterval(() => store.sweep(), 60_000).unref();
 setInterval(() => stats.prune(), 60 * 60 * 1000).unref();
 
@@ -144,6 +142,15 @@ async function handleApi(req, res, url) {
     send(res, 200, {
       totals: store.stats(),
       series: stats.series(from, to),
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/pulse") {
+    const live = store.stats().hangsLive;
+    send(res, 200, {
+      hangsLive: live,
+      series: stats.pulse(48),
     });
     return;
   }

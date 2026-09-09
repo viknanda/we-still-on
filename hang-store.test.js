@@ -142,11 +142,23 @@ describe("store", () => {
       hangsCreated: 1,
       hangsActivated: 0,
       taps: 1,
+      hangsExpired: 0,
       hangsLive: 1,
     });
     store.tap(a.id, "Alex", "late");
     assert.equal(store.stats().hangsActivated, 1);
     assert.equal(store.stats().taps, 2);
+  });
+
+  it("counts expired when ttl elapses", () => {
+    let t = 1_000_000;
+    const store = createStore({ now: () => t });
+    const hang = store.create();
+    store.tap(hang.id, "Sam", "yes");
+    t += HANG_TTL_MS + 1;
+    assert.equal(store.view(hang.id), null);
+    assert.equal(store.stats().hangsExpired, 1);
+    assert.equal(store.stats().hangsLive, 0);
   });
 
   it("keeps ttl editable until a second person joins", () => {

@@ -37,12 +37,31 @@
     <div class="grain" aria-hidden="true"></div>
     <main class="wrap">
       <div id="land" class="screen land" hidden>
-        <button type="button" class="blast" id="start">
-          <span class="blast-line">we</span>
-          <span class="blast-line">still</span>
-          <span class="blast-line">on?</span>
-        </button>
-        <p class="hint">tap to start a hang</p>
+        <div class="land-hero">
+          <button type="button" class="blast" id="start">
+            <span class="blast-line">we</span>
+            <span class="blast-line">still</span>
+            <span class="blast-line">on?</span>
+          </button>
+          <p class="hint">tap to start a hang</p>
+        </div>
+        <section class="pulse" aria-label="data minima">
+          <p class="pulse-label">data minima. hangs created. hangs gone.</p>
+          <svg
+            id="pulse-chart"
+            class="pulse-chart"
+            viewBox="0 0 320 72"
+            width="320"
+            height="72"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          ></svg>
+          <div class="pulse-meta">
+            <span class="pulse-key pulse-key-created">created</span>
+            <span class="pulse-key pulse-key-gone">gone</span>
+            <span id="pulse-live" class="pulse-live">0 live</span>
+          </div>
+        </section>
       </div>
 
       <div id="hang" class="screen hang" hidden>

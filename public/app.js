@@ -11,11 +11,14 @@ const copyBtn = document.getElementById("copy");
 const startBtn = document.getElementById("start");
 const yoursBtn = document.getElementById("yours");
 const againBtn = document.getElementById("again");
+const pulseChart = document.getElementById("pulse-chart");
+const pulseLive = document.getElementById("pulse-live");
 
 const match = location.pathname.match(/^\/h\/([A-Za-z0-9_-]+)$/);
 const hangId = match ? match[1] : null;
 
 let pollTimer = 0;
+let pulseTimer = 0;
 let lastJson = "";
 let lastView = null;
 let busy = false;
@@ -27,6 +30,8 @@ function show(el) {
   land.hidden = el !== land;
   hangEl.hidden = el !== hangEl;
   goneEl.hidden = el !== goneEl;
+  if (el === land) startPulse();
+  else stopPulse();
 }
 
 function flash(msg) {
@@ -60,6 +65,67 @@ function setTtlHours(hours, { locked = false } = {}) {
     else btn.removeAttribute("aria-disabled");
   }
   expireEl.classList.toggle("is-locked", locked);
+}
+
+function paintPulse(data) {
+  if (!pulseChart || !pulseLive || !data?.series) return;
+  pulseLive.textContent = `${Number(data.hangsLive) || 0} live`;
+  const series = data.series;
+  const w = 320;
+  const h = 72;
+  const mid = h / 2;
+  const root = getComputedStyle(document.documentElement);
+  const createdFill = root.getPropertyValue("--out").trim() || "#3a4a3c";
+  const goneFill = root.getPropertyValue("--coral").trim() || "#ff4d2e";
+  const max = Math.max(
+    1,
+    ...series.map((s) => Math.max(s.created || 0, s.expired || 0)),
+  );
+  const n = series.length || 1;
+  const gap = w / n;
+  const barW = Math.max(1.2, Math.min(4, gap * 0.45));
+  const parts = [
+    `<line x1="0" y1="${mid}" x2="${w}" y2="${mid}" stroke="rgba(14,14,14,0.22)" stroke-width="1" />`,
+  ];
+  series.forEach((s, i) => {
+    const x = gap * i + gap / 2;
+    const up = ((s.created || 0) / max) * (mid - 4);
+    const down = ((s.expired || 0) / max) * (mid - 4);
+    if (up > 0.5) {
+      parts.push(
+        `<rect x="${x - barW / 2}" y="${mid - up}" width="${barW}" height="${up}" fill="${createdFill}" />`,
+      );
+    }
+    if (down > 0.5) {
+      parts.push(
+        `<rect x="${x - barW / 2}" y="${mid}" width="${barW}" height="${down}" fill="${goneFill}" />`,
+      );
+    }
+  });
+  pulseChart.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  pulseChart.innerHTML = parts.join("");
+}
+
+async function pullPulse() {
+  try {
+    const res = await fetch("/api/pulse", { cache: "no-store" });
+    if (!res.ok) return;
+    paintPulse(await res.json());
+  } catch {
+    /* ignore */
+  }
+}
+
+function startPulse() {
+  if (!pulseChart) return;
+  pullPulse();
+  clearInterval(pulseTimer);
+  pulseTimer = setInterval(pullPulse, 20_000);
+}
+
+function stopPulse() {
+  clearInterval(pulseTimer);
+  pulseTimer = 0;
 }
 
 async function persistTtl(hours) {

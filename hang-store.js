@@ -37,11 +37,11 @@ export function createStore(opts = {}) {
   const hangs = new Map();
   const now = opts.now ?? (() => Date.now());
   const stats = opts.stats ?? null;
-  const persist = opts.persist ?? null;
   const mem = {
     hangsCreated: 0,
     hangsActivated: 0,
     taps: 0,
+    hangsExpired: 0,
   };
 
   function ttlMs(hang) {
@@ -52,12 +52,18 @@ export function createStore(opts = {}) {
     hang.touchedAt = now();
   }
 
+  function expire(id) {
+    if (!hangs.delete(id)) return false;
+    mem.hangsExpired += 1;
+    stats?.recordExpired();
+    return true;
+  }
+
   function alive(id) {
     const hang = hangs.get(id);
     if (!hang) return null;
     if (now() - hang.touchedAt > ttlMs(hang)) {
-      hangs.delete(id);
-      persist?.remove?.(id);
+      expire(id);
       return null;
     }
     return hang;
@@ -66,24 +72,7 @@ export function createStore(opts = {}) {
   function sweep() {
     const t = now();
     for (const [id, hang] of hangs) {
-      if (t - hang.touchedAt > ttlMs(hang)) {
-        hangs.delete(id);
-        persist?.remove?.(id);
-      }
-    }
-  }
-
-  function save(hang) {
-    persist?.save?.(hang);
-  }
-
-  if (persist?.loadAll) {
-    for (const hang of persist.loadAll()) {
-      if (now() - hang.touchedAt <= ttlMs(hang)) {
-        hangs.set(hang.id, hang);
-      } else {
-        persist.remove?.(hang.id);
-      }
+      if (t - hang.touchedAt > ttlMs(hang)) expire(id);
     }
   }
 
@@ -109,7 +98,6 @@ export function createStore(opts = {}) {
         touchedAt: now(),
       };
       hangs.set(id, hang);
-      save(hang);
       mem.hangsCreated += 1;
       stats?.recordCreated();
       return hang;
@@ -156,7 +144,6 @@ export function createStore(opts = {}) {
         stats?.recordActivated();
       }
       touch(hang);
-      save(hang);
       return { hang };
     },
 
@@ -172,7 +159,6 @@ export function createStore(opts = {}) {
       }
       hang.ttlHours = cleanTtlHours(rawTtlHours);
       touch(hang);
-      save(hang);
       return { hang };
     },
 
