@@ -3,3 +3,4 @@ node_modules/
 .wso-stats-key
 stats/
 data/
+.vercel
