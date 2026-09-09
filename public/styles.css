@@ -228,7 +228,7 @@ input:focus-visible {
 }
 
 .expire.is-locked .expire-opt[aria-checked="false"] {
-  opacity: 0.35;
+  color: rgba(14, 14, 14, 0.22);
 }
 
 .name.need {

@@ -202,6 +202,33 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  const ttl = url.pathname.match(/^\/api\/hangs\/([A-Za-z0-9_-]+)\/ttl$/);
+  if (ttl && req.method === "POST") {
+    if (!isHangId(ttl[1])) {
+      send(res, 404, { error: "gone" });
+      return;
+    }
+    let payload;
+    try {
+      const raw = await readBody(req);
+      payload = raw ? JSON.parse(raw) : {};
+    } catch {
+      send(res, 400, { error: "bad" });
+      return;
+    }
+    const result = store.setTtl(ttl[1], payload.ttlHours, payload.name);
+    if (result.error === "gone") {
+      send(res, 404, { error: "gone" });
+      return;
+    }
+    if (result.error) {
+      send(res, 400, { error: result.error });
+      return;
+    }
+    send(res, 200, store.view(ttl[1]));
+    return;
+  }
+
   send(res, 404, { error: "gone" });
 }
 

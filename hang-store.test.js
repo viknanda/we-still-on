@@ -149,16 +149,36 @@ describe("store", () => {
     assert.equal(store.stats().taps, 2);
   });
 
-  it("locks ttl hours on first tap", () => {
+  it("keeps ttl editable until a second person joins", () => {
     const store = createStore();
     const hang = store.create();
     assert.equal(store.view(hang.id).ttlHours, 1);
     assert.equal(store.view(hang.id).ttlLocked, false);
-    store.tap(hang.id, "Sam", "yes", "", 24);
+
+    assert.equal(store.setTtl(hang.id, 24).error, undefined);
     assert.equal(store.view(hang.id).ttlHours, 24);
+
+    store.tap(hang.id, "Sam", "yes", "", 1);
+    assert.equal(store.view(hang.id).ttlHours, 1);
+    assert.equal(store.view(hang.id).ttlLocked, false);
+
+    store.tap(hang.id, "Sam", "late", "", 24);
+    assert.equal(store.view(hang.id).ttlHours, 24);
+    assert.equal(store.view(hang.id).ttlLocked, false);
+
+    assert.equal(store.setTtl(hang.id, 1, "Sam").error, undefined);
+    assert.equal(store.view(hang.id).ttlHours, 1);
+    assert.equal(store.setTtl(hang.id, 24, "Alex").error, "locked");
+    assert.equal(store.setTtl(hang.id, 24).error, "locked");
+    assert.equal(store.view(hang.id).ttlHours, 1);
+
+    store.tap(hang.id, "Alex", "yes", "", 24);
+    assert.equal(store.view(hang.id).ttlHours, 1);
     assert.equal(store.view(hang.id).ttlLocked, true);
-    store.tap(hang.id, "Sam", "late", "", 1);
-    assert.equal(store.view(hang.id).ttlHours, 24);
+
+    assert.equal(store.setTtl(hang.id, 24, "Sam").error, "locked");
+    store.tap(hang.id, "Sam", "out", "", 24);
+    assert.equal(store.view(hang.id).ttlHours, 1);
   });
 
   it("24h hang outlives one hour idle", () => {

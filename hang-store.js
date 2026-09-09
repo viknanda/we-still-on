@@ -132,18 +132,22 @@ export function createStore(opts = {}) {
         hang.line = cleanLine(rawLine);
         hang.frozen = true;
       }
-      if (!hang.ttlLocked) {
-        hang.ttlHours = cleanTtlHours(rawTtlHours);
-        hang.ttlLocked = true;
-      }
 
       const before = hang.people.length;
       const existing = hang.people.find((p) => p.name === name);
+      const isNew = !existing;
+      if (isNew && hang.people.length >= 1) {
+        hang.ttlLocked = true;
+      } else if (!hang.ttlLocked) {
+        hang.ttlHours = cleanTtlHours(rawTtlHours);
+      }
+
       if (existing) {
         existing.status = status;
       } else {
         hang.people.push({ name, status });
       }
+      if (hang.people.length >= 2) hang.ttlLocked = true;
 
       mem.taps += 1;
       stats?.recordTap();
@@ -151,6 +155,22 @@ export function createStore(opts = {}) {
         mem.hangsActivated += 1;
         stats?.recordActivated();
       }
+      touch(hang);
+      save(hang);
+      return { hang };
+    },
+
+    setTtl(id, rawTtlHours, rawName) {
+      const hang = alive(id);
+      if (!hang) return { error: "gone" };
+      if (hang.people.length >= 2) hang.ttlLocked = true;
+      if (hang.ttlLocked) return { error: "locked" };
+      // Empty hang: anyone may set duration. Solo hang: only that person.
+      if (hang.people.length === 1) {
+        const name = cleanName(rawName);
+        if (!name || hang.people[0].name !== name) return { error: "locked" };
+      }
+      hang.ttlHours = cleanTtlHours(rawTtlHours);
       touch(hang);
       save(hang);
       return { hang };

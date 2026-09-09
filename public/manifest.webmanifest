@@ -1,6 +1,6 @@
 {
   "name": "we still on?",
-  "short_name": "hang?",
+  "short_name": "hang",
   "description": "tap yes, late, or out. share the link.",
   "start_url": "/",
   "scope": "/",

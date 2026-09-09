@@ -43,13 +43,52 @@ function myName() {
   return nameEl.value.trim();
 }
 
+function ttlEditable(view) {
+  if (!view || view.ttlLocked) return false;
+  if (view.people.length === 0) return true;
+  if (view.people.length >= 2) return false;
+  const mine = myName();
+  return Boolean(mine && view.people[0].name === mine);
+}
+
 function setTtlHours(hours, { locked = false } = {}) {
   ttlHours = hours === 24 ? 24 : 1;
   for (const btn of expireEl.querySelectorAll(".expire-opt")) {
     const on = Number(btn.dataset.hours) === ttlHours;
     btn.setAttribute("aria-checked", on ? "true" : "false");
+    if (locked) btn.setAttribute("aria-disabled", "true");
+    else btn.removeAttribute("aria-disabled");
   }
   expireEl.classList.toggle("is-locked", locked);
+}
+
+async function persistTtl(hours) {
+  if (!hangId) return;
+  try {
+    const res = await fetch(`/api/hangs/${hangId}/ttl`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ttlHours: hours, name: nameEl.value }),
+    });
+    if (res.status === 404) {
+      show(goneEl);
+      return;
+    }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.error === "locked") {
+        await pull().catch(() => {
+          if (lastView) paint(lastView);
+        });
+      }
+      return;
+    }
+    const view = await res.json();
+    lastJson = JSON.stringify(view);
+    paint(view);
+  } catch {
+    /* poll will reconcile */
+  }
 }
 
 async function createHang() {
@@ -120,11 +159,7 @@ function paint(view) {
   }
 
   paintLine(view);
-  if (view.ttlLocked) {
-    setTtlHours(view.ttlHours ?? 1, { locked: true });
-  } else {
-    setTtlHours(ttlHours, { locked: false });
-  }
+  setTtlHours(view.ttlHours ?? 1, { locked: !ttlEditable(view) });
 
   const myStatus = mine
     ? view.people.find((p) => p.name === mine)?.status
@@ -228,7 +263,9 @@ for (const row of document.querySelectorAll(".row")) {
 for (const btn of expireEl.querySelectorAll(".expire-opt")) {
   btn.addEventListener("click", () => {
     if (expireEl.classList.contains("is-locked")) return;
-    setTtlHours(Number(btn.dataset.hours));
+    const hours = Number(btn.dataset.hours);
+    setTtlHours(hours);
+    persistTtl(hours);
   });
 }
 
