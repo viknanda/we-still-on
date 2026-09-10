@@ -39,11 +39,13 @@
       <div id="land" class="screen land" hidden>
         <div class="land-hero">
           <button type="button" class="blast" id="start">
-            <span class="blast-line">we</span>
-            <span class="blast-line">still</span>
-            <span class="blast-line">on?</span>
+            <span class="blast-title">
+              <span class="blast-line">we</span>
+              <span class="blast-line">still</span>
+              <span class="blast-line">on?</span>
+            </span>
+            <span class="hint">tap to start a hang</span>
           </button>
-          <p class="hint">tap to start a hang</p>
         </div>
         <section class="pulse" aria-label="data minima">
           <p class="pulse-label">data minima. hangs created. hangs gone.</p>
@@ -56,10 +58,23 @@
             preserveAspectRatio="none"
             aria-hidden="true"
           ></svg>
-          <div class="pulse-meta">
-            <span class="pulse-key pulse-key-created">created</span>
-            <span class="pulse-key pulse-key-gone">gone</span>
-            <span id="pulse-live" class="pulse-live">0 live</span>
+          <div class="pulse-foot">
+            <button
+              type="button"
+              class="help"
+              id="help"
+              aria-label="what is wsowso"
+              aria-haspopup="dialog"
+              aria-controls="demo"
+              aria-expanded="false"
+            >
+              wsowso wat
+            </button>
+            <div class="pulse-meta">
+              <span class="pulse-key pulse-key-created">created</span>
+              <span class="pulse-key pulse-key-gone">gone</span>
+              <span id="pulse-live" class="pulse-live">0 live</span>
+            </div>
           </div>
         </section>
       </div>
@@ -150,12 +165,73 @@
 
       <div id="gone" class="screen land" hidden>
         <button type="button" class="blast" id="again">
-          <span class="blast-line">hang</span>
-          <span class="blast-line">404'd</span>
+          <span class="blast-title">
+            <span class="blast-line">hang</span>
+            <span class="blast-line">404'd</span>
+          </span>
+          <span class="hint">tap to start a hang</span>
         </button>
-        <p class="hint">tap to start a hang</p>
       </div>
     </main>
+
+    <div
+      id="demo"
+      class="demo"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demo-caption"
+      hidden
+    >
+      <button type="button" class="demo-scrim" id="demo-scrim" tabindex="-1" aria-label="Close"></button>
+      <div class="demo-sheet">
+        <button type="button" class="demo-close" id="demo-close" aria-label="Close">
+          ×
+        </button>
+        <div class="demo-phone" aria-hidden="true">
+          <div class="demo-stage" id="demo-stage" data-beat="land">
+            <div class="demo-land">
+              <p class="demo-blast">
+                <span>we</span>
+                <span>still</span>
+                <span>on?</span>
+              </p>
+              <p class="demo-hint">tap to start a hang</p>
+              <span class="demo-tap"></span>
+            </div>
+            <div class="demo-hang">
+              <p class="demo-name" id="demo-name"></p>
+              <p class="demo-line" id="demo-line"></p>
+              <div class="demo-lanes">
+                <div class="demo-row" data-status="yes">
+                  <span class="demo-head">
+                    <span class="demo-word">Yes</span>
+                    <span class="demo-count" id="demo-yes-n">0</span>
+                  </span>
+                  <span class="demo-names" id="demo-yes"></span>
+                </div>
+                <div class="demo-row" data-status="late">
+                  <span class="demo-head">
+                    <span class="demo-word">Late</span>
+                    <span class="demo-count" id="demo-late-n">0</span>
+                  </span>
+                  <span class="demo-names" id="demo-late"></span>
+                </div>
+                <div class="demo-row" data-status="out">
+                  <span class="demo-head">
+                    <span class="demo-word">Out</span>
+                    <span class="demo-count" id="demo-out-n">0</span>
+                  </span>
+                  <span class="demo-names" id="demo-out"></span>
+                </div>
+              </div>
+              <p class="demo-copy" id="demo-copy">Copy link</p>
+            </div>
+          </div>
+        </div>
+        <p class="demo-caption" id="demo-caption">tap to start a hang</p>
+      </div>
+    </div>
+
     <p id="err" class="err" hidden></p>
     <script src="/app.js" type="module"></script>
   </body>

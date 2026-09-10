@@ -370,3 +370,195 @@ if (!hangId) {
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
+
+const helpBtn = document.getElementById("help");
+const demoEl = document.getElementById("demo");
+const demoScrim = document.getElementById("demo-scrim");
+const demoClose = document.getElementById("demo-close");
+const demoStage = document.getElementById("demo-stage");
+const demoCaption = document.getElementById("demo-caption");
+const demoName = document.getElementById("demo-name");
+const demoLine = document.getElementById("demo-line");
+const demoCopy = document.getElementById("demo-copy");
+const demoYes = document.getElementById("demo-yes");
+const demoLate = document.getElementById("demo-late");
+const demoOut = document.getElementById("demo-out");
+const demoYesN = document.getElementById("demo-yes-n");
+const demoLateN = document.getElementById("demo-late-n");
+const demoOutN = document.getElementById("demo-out-n");
+
+let demoTimers = [];
+let demoOpen = false;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)")
+  .matches;
+
+function clearDemoTimers() {
+  for (const id of demoTimers) clearTimeout(id);
+  demoTimers = [];
+}
+
+function demoWait(ms) {
+  return new Promise((resolve) => {
+    const id = setTimeout(resolve, ms);
+    demoTimers.push(id);
+  });
+}
+
+function setBeat(beat, caption) {
+  if (!demoStage) return;
+  demoStage.dataset.beat = beat;
+  if (demoCaption && caption != null) demoCaption.textContent = caption;
+}
+
+function setDemoNames(target, names) {
+  target.replaceChildren();
+  for (const name of names) {
+    const who = document.createElement("span");
+    who.className = "demo-who";
+    who.textContent = name;
+    target.appendChild(who);
+  }
+}
+
+function paintDemoLanes({ yes = [], late = [], out = [], mine = null } = {}) {
+  setDemoNames(demoYes, yes);
+  setDemoNames(demoLate, late);
+  setDemoNames(demoOut, out);
+  demoYesN.textContent = String(yes.length);
+  demoLateN.textContent = String(late.length);
+  demoOutN.textContent = String(out.length);
+  for (const row of demoStage.querySelectorAll(".demo-row")) {
+    const on = row.dataset.status === mine;
+    row.classList.toggle("is-mine", on);
+  }
+}
+
+function slamDemo(status) {
+  const row = demoStage.querySelector(`.demo-row[data-status="${status}"]`);
+  if (!row) return;
+  row.classList.remove("is-slam");
+  void row.offsetWidth;
+  row.classList.add("is-slam");
+}
+
+async function typeDemo(el, text, msPer = 70) {
+  el.textContent = "";
+  for (let i = 1; i <= text.length; i++) {
+    if (!demoOpen) return;
+    el.textContent = text.slice(0, i);
+    await demoWait(msPer);
+  }
+}
+
+function resetDemo() {
+  setBeat("land", "tap to start a hang");
+  demoName.textContent = "";
+  demoLine.textContent = "";
+  demoCopy.textContent = "Copy link";
+  paintDemoLanes();
+  for (const row of demoStage.querySelectorAll(".demo-row")) {
+    row.classList.remove("is-slam", "is-mine");
+  }
+}
+
+async function runDemoLoop() {
+  while (demoOpen) {
+    resetDemo();
+    if (reduceMotion) {
+      setBeat("share", "share the link — friends tap Yes / Late / Out");
+      demoName.textContent = "Maya";
+      demoLine.textContent = "matcha walk";
+      paintDemoLanes({
+        yes: ["Maya", "Sam"],
+        late: ["Jordan"],
+        out: [],
+        mine: "yes",
+      });
+      demoCopy.textContent = "Copy link";
+      await demoWait(4000);
+      continue;
+    }
+
+    await demoWait(900);
+    if (!demoOpen) break;
+
+    setBeat("hang", "type your name");
+    await demoWait(280);
+    await typeDemo(demoName, "Maya", 85);
+    if (!demoOpen) break;
+
+    setBeat("hang", "optional: what's the hang");
+    await typeDemo(demoLine, "matcha walk", 55);
+    if (!demoOpen) break;
+
+    await demoWait(350);
+    setBeat("tap", "tap Yes / Late / Out");
+    paintDemoLanes({ yes: ["Maya"], late: [], out: [], mine: "yes" });
+    slamDemo("yes");
+    await demoWait(900);
+    if (!demoOpen) break;
+
+    setBeat("fill", "friends land on the same link");
+    paintDemoLanes({
+      yes: ["Maya"],
+      late: ["Jordan"],
+      out: [],
+      mine: "yes",
+    });
+    await demoWait(700);
+    if (!demoOpen) break;
+
+    paintDemoLanes({
+      yes: ["Maya", "Sam"],
+      late: ["Jordan"],
+      out: [],
+      mine: "yes",
+    });
+    await demoWait(1100);
+    if (!demoOpen) break;
+
+    setBeat("share", "share the link");
+    demoCopy.textContent = "Copy link";
+    await demoWait(1600);
+    if (!demoOpen) break;
+
+    demoCopy.textContent = "Copied";
+    setBeat("done", "that's it");
+    await demoWait(1400);
+    if (!demoOpen) break;
+
+    await demoWait(500);
+  }
+}
+
+function openDemo() {
+  if (!demoEl || demoOpen) return;
+  demoOpen = true;
+  demoEl.hidden = false;
+  helpBtn?.setAttribute("aria-expanded", "true");
+  document.body.style.overflow = "hidden";
+  demoClose?.focus();
+  clearDemoTimers();
+  runDemoLoop();
+}
+
+function closeDemo() {
+  if (!demoEl || !demoOpen) return;
+  demoOpen = false;
+  clearDemoTimers();
+  demoEl.hidden = true;
+  helpBtn?.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+  helpBtn?.focus();
+  resetDemo();
+}
+
+helpBtn?.addEventListener("click", () => {
+  if (demoOpen) closeDemo();
+  else openDemo();
+});
+demoScrim?.addEventListener("click", closeDemo);
+demoClose?.addEventListener("click", closeDemo);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && demoOpen) closeDemo();
+});
